@@ -1,0 +1,11 @@
+[project]
+name = "frigate-mqtt-notifier"
+version = "0.1.0"
+description = "Frigate MQTT Notifier"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "ntfpy>=0.0.12",
+    "paho-mqtt>=2.1.0",
+    "requests>=2.32.3",
+]
