@@ -4,9 +4,9 @@ from copy import deepcopy
 from paho.mqtt import client as mqtt_client
 from ntfpy import NTFYServer, NTFYClient, NTFYPushMessage, NTFYUrlAttachment
 
-MQTT_BROKER_IP = os.getenv("MQTT_BROKER_IP", "localhost")
+MQTT_BROKER_IP = os.getenv("MQTT_BROKER_IP", "eclipse-mosquitto")
 MQTT_BROKER_PORT = int(os.getenv("MQTT_BROKER_PORT", 1883))
-MQTT_CLIENT_ID = os.getenv("MQTT_CLIENT_ID", "frigate-notifier")
+MQTT_CLIENT_ID = os.getenv("MQTT_CLIENT_ID", "frigate-mqtt-notifier")
 MQTT_BROKER_USERNAME = os.getenv("MQTT_BROKER_USERNAME")
 MQTT_BROKER_PASSWORD = os.getenv("MQTT_BROKER_PASSWORD")
 
@@ -16,7 +16,7 @@ NTFY_USERNAME = os.getenv("NTFY_USERNAME")
 NTFY_PASSWORD = os.getenv("NTFY_PASSWORD")
 
 MESSAGE_TIMEOUT = float(os.getenv("MESSAGE_TIMEOUT", 1.0))
-FRIGATE_BASE_URL = os.getenv("FRIGATE_BASE_URL", "http://localhost:5000")
+FRIGATE_BASE_URL = os.getenv("FRIGATE_BASE_URL", "http://frigate:5000")
 
 _last_msg_time = 0.0
 _seen_new = {}
@@ -69,22 +69,22 @@ def on_connect(client, userdata, flags, rc):
 
 def get_zone_changes(event_id, current):
     prev = _entered_zones.setdefault(event_id, [])
-    
+
     logging.debug(f"Event {event_id} previous zones: {', '.join(prev)}")
     logging.debug(f"Event {event_id} current zones: {', '.join(current)}")
 
     entered = [z for z in current if z not in prev]
-    
+
     _entered_zones[event_id] = current.copy()
 
     logging.debug(f"Event {event_id} entered zones: {', '.join(entered)}")
-    
+
     return entered
 
 def on_message(client, userdata, mqtt_msg):
     global _last_msg_time
     now = time.time()
-    
+
     if now - _last_msg_time < MESSAGE_TIMEOUT: # Throttle messages
         logging.debug("Event message throttled")
         return
@@ -120,7 +120,7 @@ def on_message(client, userdata, mqtt_msg):
             _entered_zones[eid] = deepcopy(zones)
 
             logging.debug(f"New {label} event detected in {', '.join(zones)}")
-            
+
             body = f"New {label} Detected with {score:.1f}% certainty in {', '.join(zones)}"
 
             msg = NTFYPushMessage(body, title=f"{label} Detected")
@@ -129,12 +129,12 @@ def on_message(client, userdata, mqtt_msg):
                 msg.attachment = NTFYUrlAttachment(clip_url)
 
                 logging.debug(f"Found Event clip URL: {clip_url}")
-            
+
             elif snap_url:
                 msg.attachment = NTFYUrlAttachment(snap_url)
 
                 logging.debug(f"Found Event snapshot URL: {snap_url}")
-            
+
                 ntfy_client.send_message(msg)
 
         else:
@@ -148,7 +148,7 @@ def on_message(client, userdata, mqtt_msg):
         if not new_z:
             logging.debug(f"No new zones detected for event {eid}")
             return
-        
+
         body = f"{label} entered zones: {', '.join(new_z)}"
         msg = NTFYPushMessage(body, title=f"{label} Zone Entry")
 
@@ -156,7 +156,7 @@ def on_message(client, userdata, mqtt_msg):
             msg.attachment = NTFYUrlAttachment(snap_url)
 
             logging.debug(f"Found Event snapshot URL: {snap_url}")
-            
+
         ntfy_client.send_message(msg)
 
     elif event_type == "end":
@@ -170,12 +170,12 @@ def on_message(client, userdata, mqtt_msg):
             msg.attachment = NTFYUrlAttachment(clip_url)
 
             logging.debug(f"Found Event clip URL: {clip_url}")
-            
+
         elif snap_url:
             msg.attachment = NTFYUrlAttachment(snap_url)
 
             logging.debug(f"Found Event snapshot URL: {snap_url}")
-            
+
         ntfy_client.send_message(msg)
 
 client = mqtt_client.Client(mqtt_client.CallbackAPIVersion.VERSION2, MQTT_CLIENT_ID)
