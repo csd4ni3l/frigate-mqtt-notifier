@@ -2,7 +2,8 @@ import os, time, json, logging, sys
 from copy import deepcopy
 
 from paho.mqtt import client as mqtt_client
-from ntfpy import NTFYServer, NTFYClient, NTFYPushMessage, NTFYUrlAttachment
+from ntfpy import NTFYServer, NTFYClient, NTFYPushMessage, NTFYUrlAttachment, NTFYUser
+from paho.mqtt.enums import CallbackAPIVersion
 
 MQTT_BROKER_IP = os.getenv("MQTT_BROKER_IP", "eclipse-mosquitto")
 MQTT_BROKER_PORT = int(os.getenv("MQTT_BROKER_PORT", 1883))
@@ -59,12 +60,12 @@ def on_connect(client, userdata, flags, rc):
     if rc == 0:
         logging.info("Connected to MQTT Broker!")
 
-        msg = NTFYPushMessage(body="Connected to MQTT Broker!",title="Frigate MQTT Notifier")
+        msg = NTFYPushMessage(message="Connected to MQTT Broker!",title="Frigate MQTT Notifier")
         ntfy_client.send_message(msg)
     else:
         logging.error(f"Connection to MQTT Broker failed (rc={rc})")
 
-        msg = NTFYPushMessage(body=f"Connection to MQTT Broker failed (rc={rc})",title="Frigate MQTT Notifier")
+        msg = NTFYPushMessage(message=f"Connection to MQTT Broker failed (rc={rc})",title="Frigate MQTT Notifier")
         ntfy_client.send_message(msg)
 
 def get_zone_changes(event_id, current):
@@ -178,7 +179,7 @@ def on_message(client, userdata, mqtt_msg):
 
         ntfy_client.send_message(msg)
 
-client = mqtt_client.Client(mqtt_client.CallbackAPIVersion.VERSION2, MQTT_CLIENT_ID)
+client = mqtt_client.Client(CallbackAPIVersion.VERSION2, MQTT_CLIENT_ID)
 
 if MQTT_BROKER_USERNAME:
     client.username_pw_set(MQTT_BROKER_USERNAME, MQTT_BROKER_PASSWORD)
