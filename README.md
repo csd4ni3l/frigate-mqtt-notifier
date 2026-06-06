@@ -4,7 +4,7 @@ To deploy it, you can use the official image:
 ```yaml
 services:
   frigate-mqtt-notifier:
-    image: csd4ni3lofficial/frigate-mqtt-notifier:latest
+    image: git.csd4ni3l.hu/csd4ni3l/frigate-mqtt-notifier:latest
     container_name: frigate-mqtt-notifier
     environment:
       - LOG_LEVEL=INFO
