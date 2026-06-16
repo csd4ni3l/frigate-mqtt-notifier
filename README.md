@@ -21,3 +21,8 @@ services:
       - NTFY_PASSWORD=
     restart: unless-stopped
 ```
+
+
+---
+**Migration Notice:** This repository has been moved to https://git.csd4ni3l.hu/csd4ni3l/frigate-mqtt-notifier
+---
